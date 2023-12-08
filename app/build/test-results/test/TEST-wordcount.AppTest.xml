@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="wordcount.AppTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2023-12-07T17:03:49" hostname="desktop" time="2.667">
+  <properties/>
+  <testcase name="testRegisterActions" classname="wordcount.AppTest" time="1.872"/>
+  <testcase name="testInitialize" classname="wordcount.AppTest" time="0.794"/>
+  <system-out><![CDATA[Initializing
+Connected to bot with name: testbot
+Got actions path: /home/mast3r/code/wordcount/app/src/main/java/wordcount/actions
+Got action: wordcount.actions.Count
+Got method: initialize
+Initializing
+Connected to bot with name: testbot
+]]></system-out>
+  <system-err><![CDATA[SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+SLF4J: Failed to load class "org.slf4j.impl.StaticMDCBinder".
+SLF4J: Defaulting to no-operation MDCAdapter implementation.
+SLF4J: See http://www.slf4j.org/codes.html#no_static_mdc_binder for further details.
+[Test worker] INFO JDA - Login Successful!
+[JDA MainWS-WriteThread] INFO WebSocketClient - Connected to WebSocket
+[JDA MainWS-ReadThread] INFO JDA - Finished Loading!
+[Test worker] INFO JDA - Login Successful!
+[JDA MainWS-WriteThread] INFO WebSocketClient - Connected to WebSocket
+[JDA MainWS-ReadThread] INFO JDA - Finished Loading!
+]]></system-err>
+</testsuite>
