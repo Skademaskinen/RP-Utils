@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import wordcount.Models.CommandResponse;
 
 public interface Action {
+
     public default String serialize(){
         return "";
     }
@@ -29,9 +30,11 @@ public interface Action {
             %s
         """, 
         data.getName(), 
-        ((SlashCommandData)data).getOptions().stream().map(option -> option.getName()).collect(Collectors.joining(", ")),
+        ((SlashCommandData)data).getOptions().stream().map(option -> option.isRequired() ? option.getName() : "*"+option.getName()+"*").collect(Collectors.joining(", ")),
         ((SlashCommandData)data).getDescription()));
         return result;
     }
+
+    public boolean assertFunctionality();
     
 }

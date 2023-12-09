@@ -5,16 +5,21 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -24,35 +29,29 @@ import net.dv8tion.jda.api.utils.AttachedFile;
 import wordcount.Models.CommandResponse;
 
 public class Makepdf implements Action{
-    Event event;
-    boolean debug;
-    Runtime runtime = Runtime.getRuntime();
+    private Event event;
+    private boolean debug;
+    private Runtime runtime = Runtime.getRuntime();
+    private GuildChannelUnion target;
+    private List<MessageChannel> channels;
+    private boolean test = false;
+    private String outfile;
+    public boolean testExecute = false;
+    public boolean testRespond = false;
 
     public Makepdf() {}
+    public Makepdf(Map<String, String> data, JDA jda) {
+        test = true;
+        String channelId = data.get("id");
+        target = (GuildChannelUnion)jda.getCategoryById(channelId);
+        channels = ((Category)target).getChannels().stream().map(channel -> (MessageChannel)channel).toList();
+    }
     public Makepdf(Event event) {
         this.event = event;
-        this.debug = ((SlashCommandInteractionEvent)event).getOption("debug") == null ? false : ((SlashCommandInteractionEvent)event).getOption("debug").getAsBoolean();
-    }
-
-    @Override
-    public CommandData initialize() {
-        return Commands.slash(this.getClass().getSimpleName().toLowerCase(), "Generate a PDF format of this server")
-            .addOption(OptionType.CHANNEL, "target", "Specify a category or channel to generate from", true)
-            .addOption(OptionType.BOOLEAN, "debug", "Enable debug mode", false);
-    }
-
-    @Override @SuppressWarnings("deprecation")
-    public CommandResponse execute() {
-        // prepare
         ((SlashCommandInteractionEvent)event).deferReply(true).queue();
-        String[] command = {"bash", "../document/initialize-tex-env.sh"};
-        try {
-            Process process = runtime.exec(command);
-            process.waitFor();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        List<MessageChannel> channels;
+        target = ((SlashCommandInteractionEvent)event).getOption("target").getAsChannel();
+        debug = ((SlashCommandInteractionEvent)event).getOption("debug") == null ? false : ((SlashCommandInteractionEvent)event).getOption("debug").getAsBoolean();
+
         if(((SlashCommandInteractionEvent)event).getMessageChannel().getType().equals(ChannelType.PRIVATE)){
             channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getMessageChannel());}};
         }
@@ -69,6 +68,25 @@ public class Makepdf implements Action{
             }
             catch(IOException e){}
             channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().asTextChannel());}};
+        }
+    }
+
+    @Override
+    public CommandData initialize() {
+        return Commands.slash(this.getClass().getSimpleName().toLowerCase(), "Generate a PDF format of this server")
+            .addOption(OptionType.CHANNEL, "target", "Specify a category or channel to generate from", true)
+            .addOption(OptionType.BOOLEAN, "debug", "Enable debug mode", false);
+    }
+
+    @Override @SuppressWarnings("deprecation")
+    public CommandResponse execute() {
+        // prepare
+        String[] command = {"bash", "../document/initialize-tex-env.sh"};
+        try {
+            Process process = runtime.exec(command);
+            process.waitFor();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
         for(MessageChannel channel : channels){
             System.out.println("generating for channel: "+ channel.getName());
@@ -114,6 +132,7 @@ public class Makepdf implements Action{
             }
             catch(IOException | InterruptedException | ExecutionException e){e.printStackTrace();}
         }
+        testExecute = true;
         return new CommandResponse() {
             private void execAndWait(String[] command){
                 try {
@@ -140,15 +159,30 @@ public class Makepdf implements Action{
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                outfile = String.format("../archive/document%s.pdf", new File("../archive").listFiles().length == 0 ? 0 : new File("../archive").listFiles().length);
                 String[] renderPdfCommand = {"xelatex", "-interaction=nonstopmode", "-shell-escape", "../document/master.tex"};
                 String[] cleanupCommand = {"rm", "master.aux", "master.log"};
-                String[] installCommand = {"mv", "master.pdf", String.format("../archive/document%s.pdf", new File("../archive").listFiles().length == 0 ? 0 : new File("../archive").listFiles().length)};
+                String[] installCommand = {"mv", "master.pdf", outfile};
                 execAndWait(renderPdfCommand);
                 execAndWait(cleanupCommand);
                 execAndWait(installCommand);
-                ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(String.format("../archive/document%d.pdf", new File("../archive").listFiles().length-1)))).queue();
+                if(!test){
+                    ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(outfile))).queue();
+                }
+                else{
+                    System.out.println("Finished execution\n"+String.format("../archive/document%d.pdf", new File("../archive").listFiles().length-1));
+                }
+                testRespond = true;
             }
         };
+    }
+
+    @Override
+    public boolean assertFunctionality(){
+        assert testExecute;
+        assert testRespond;
+        assert new File(outfile).exists();
+        return true;
     }
     
 }
