@@ -81,7 +81,7 @@ public class Makepdf implements Action{
     @Override @SuppressWarnings("deprecation")
     public CommandResponse execute() {
         // prepare
-        String[] command = {"bash", "../document/initialize-tex-env.sh"};
+        String[] command = {System.getenv("BASH_PATH"), "../document/initialize-tex-env.sh"};
         try {
             Process process = runtime.exec(command);
             process.waitFor();
@@ -160,7 +160,7 @@ public class Makepdf implements Action{
                     e.printStackTrace();
                 }
                 outfile = String.format("../archive/document%s.pdf", new File("../archive").listFiles().length == 0 ? 0 : new File("../archive").listFiles().length);
-                String[] renderPdfCommand = {"xelatex", "-interaction=nonstopmode", "-shell-escape", "../document/master.tex"};
+                String[] renderPdfCommand = {System.getenv("XELATEX_PATH"), "-interaction=nonstopmode", "-shell-escape", "../document/master.tex"};
                 String[] cleanupCommand = {"rm", "master.aux", "master.log"};
                 String[] installCommand = {"mv", "master.pdf", outfile};
                 execAndWait(renderPdfCommand);
