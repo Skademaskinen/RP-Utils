@@ -28,7 +28,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'oracle'
-    - name: Set up texlive
+    - name: Set up TeX Live
       uses: teatimeguest/setup-texlive-action@v3
       run: tlmgr --version
     - name: Build with Gradle
