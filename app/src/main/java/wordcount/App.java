@@ -13,11 +13,15 @@ import java.util.stream.Collectors;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import wordcount.eventListeners.SlashCommandListener;
+
+// INVITE LINK: https://discord.com/api/oauth2/authorize?client_id=1182974918451806299&permissions=549756202048&scope=bot
 
 public class App {
     protected JDA jda;
@@ -30,9 +34,11 @@ public class App {
 
     protected void initialize(){
         System.out.println("Initializing");
-        JDABuilder builder = JDABuilder.createDefault("ODU1MTQwNDg4NDk0NDQ4NjQw.GSggS3.kvzNvkjCJ9po4YecZyj_TJFo6lDINgsKPa-lms");
+        JDABuilder builder = JDABuilder.createDefault("MTE4Mjk3NDkxODQ1MTgwNjI5OQ.GQYpGF.w28r4Yu_HA4ZoVrVoSRUt5-VIFFGhUHTvHxllM");
         builder.addEventListeners(new SlashCommandListener());
         builder.enableIntents(GatewayIntent.MESSAGE_CONTENT);
+        builder.setActivity(Activity.playing("World of Warcraft"));
+        builder.setStatus(OnlineStatus.DO_NOT_DISTURB);
         jda = builder.build();
         try {
             jda.awaitReady();

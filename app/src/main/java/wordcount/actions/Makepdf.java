@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,24 +25,27 @@ import wordcount.Models.CommandResponse;
 
 public class Makepdf implements Action{
     Event event;
+    boolean debug;
     Runtime runtime = Runtime.getRuntime();
 
     public Makepdf() {}
     public Makepdf(Event event) {
         this.event = event;
+        this.debug = ((SlashCommandInteractionEvent)event).getOption("debug") == null ? false : ((SlashCommandInteractionEvent)event).getOption("debug").getAsBoolean();
     }
 
     @Override
     public CommandData initialize() {
         return Commands.slash(this.getClass().getSimpleName().toLowerCase(), "Generate a PDF format of this server")
-            .addOption(OptionType.CHANNEL, "target", "Specify a category or channel to generate from", true);
+            .addOption(OptionType.CHANNEL, "target", "Specify a category or channel to generate from", true)
+            .addOption(OptionType.BOOLEAN, "debug", "Enable debug mode", false);
     }
 
     @Override @SuppressWarnings("deprecation")
     public CommandResponse execute() {
         // prepare
         ((SlashCommandInteractionEvent)event).deferReply(true).queue();
-        String[] command = {"bash", "../document-template/initialize-tex-env.sh"};
+        String[] command = {"bash", "../document/initialize-tex-env.sh"};
         try {
             Process process = runtime.exec(command);
             process.waitFor();
@@ -52,19 +56,19 @@ public class Makepdf implements Action{
         if(((SlashCommandInteractionEvent)event).getMessageChannel().getType().equals(ChannelType.PRIVATE)){
             channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getMessageChannel());}};
         }
-        else if(((SlashCommandInteractionEvent)event).getOptions().get(0).getAsChannel().getType().equals(ChannelType.CATEGORY)){
+        else if(((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().getType().equals(ChannelType.CATEGORY)){
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/tmp/wordcount-document/index.tex")))){
                 writer.append(String.format("\\chapter*{%s}", ((SlashCommandInteractionEvent)event).getGuild().getName()));
             }
             catch(IOException e){}
-            channels = ((SlashCommandInteractionEvent)event).getOptions().get(0).getAsChannel().asCategory().getChannels().stream().filter(channel -> channel.getType().equals(ChannelType.TEXT)).map(channel -> (MessageChannel)channel).toList();
+            channels = ((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().asCategory().getChannels().stream().filter(channel -> channel.getType().equals(ChannelType.TEXT)).map(channel -> (MessageChannel)channel).toList();
         }
         else{
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/tmp/wordcount-document/index.tex")))){
-                writer.append(String.format("\\chapter*{%s}", ((SlashCommandInteractionEvent)event).getGuild().getName()));
+                writer.append(String.format("\\chapter*{%s}\n", ((SlashCommandInteractionEvent)event).getGuild().getName()));
             }
             catch(IOException e){}
-            channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getOptions().get(0).getAsChannel().asTextChannel());}};
+            channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().asTextChannel());}};
         }
         for(MessageChannel channel : channels){
             System.out.println("generating for channel: "+ channel.getName());
@@ -92,41 +96,57 @@ public class Makepdf implements Action{
                         content = "error";
                     }
                     try {
-                        writer.append(String.format("\\paragraph{%s} %s\n", paragraph, content));
+                        if(!content.equals("error") || debug){
+                            writer.append(String.format("\\paragraph{%s} %s\n", paragraph, content));
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     // maybe do attachments as well?
                     for(Attachment attachment : message.getAttachments().stream().filter(attachment -> attachment.isImage()).collect(Collectors.toList())){
-                        if(attachment.getFileName().length() > 50 || attachment.getFileExtension().equals("gif")) continue;
-                        attachment.downloadToFile("/tmp/wordcount-document/"+attachment.getFileName()).complete(null);
-                        writer.append(String.format("\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=\\textwidth]{%s}\n \\end{figure}", "/tmp/wordcount-document/"+attachment.getFileName()));
+                        if(attachment.getFileName().length() > 50 || attachment.getFileExtension().matches("gif|webp")) continue;
+                        File image = attachment.downloadToFile("/tmp/wordcount-document/"+message.getId()+"."+attachment.getFileName()).get();
+                        System.out.println("Got image: "+image.getName());
+                        writer.append(String.format("\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=\\textwidth]{%s}\n \\end{figure}\n", "/tmp/wordcount-document/"+image.getName()));
                     }
                 };
                 System.out.println("finished writing!");
             }
-            catch(IOException e){e.printStackTrace();}
+            catch(IOException | InterruptedException | ExecutionException e){e.printStackTrace();}
         }
         return new CommandResponse() {
+            private void execAndWait(String[] command){
+                try {
+                    System.out.println(String.format("Launching process with args: [%s]", Arrays.asList(command).stream().collect(Collectors.joining(", "))));
+                    Process process = runtime.exec(command);
+                    for(String line : process.inputReader().lines().toList()) System.out.println(line);
+                    if(process.waitFor() != 0){
+                        System.err.println("Process failed!");
+                        for(String line : process.errorReader().lines().toList()) System.err.println(line);
+                    }
+                    System.out.println("Finished task!");
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+                
+            }
+
             @Override
             public void execute() {
+                System.out.println("Rendering PDF...");
                 // generate
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                String[] command = {"bash", "../document-template/generate-pdf.sh"};
-                try {
-                    Process process = runtime.exec(command);
-
-                    for(String line : process.errorReader().lines().toList()) System.err.println(line);
-                    for(String line : process.inputReader().lines().toList()) System.err.println(line);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(String.format("../version-log/document%d.pdf", new File("../version-log").listFiles().length-1)))).queue();
+                String[] renderPdfCommand = {"xelatex", "-interaction=nonstopmode", "-shell-escape", "../document/master.tex"};
+                String[] cleanupCommand = {"rm", "master.aux", "master.log"};
+                String[] installCommand = {"mv", "master.pdf", String.format("../archive/document%s.pdf", new File("../archive").listFiles().length == 0 ? 0 : new File("../archive").listFiles().length)};
+                execAndWait(renderPdfCommand);
+                execAndWait(cleanupCommand);
+                execAndWait(installCommand);
+                ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(String.format("../archive/document%d.pdf", new File("../archive").listFiles().length-1)))).queue();
             }
         };
     }
