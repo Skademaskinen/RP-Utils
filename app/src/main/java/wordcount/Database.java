@@ -24,10 +24,10 @@ public class Database {
         return doSQL(cmd);
     }
 
-    private String doSQL(String query, String format){
-        String[] cmd = {System.getenv("SQLITE3_PATH") == null ? "sqlite3" : System.getenv("SQLITE3_PATH"), path, query, format};
-        return doSQL(cmd);
-    }
+    //private String doSQL(String query, String format){
+    //    String[] cmd = {System.getenv("SQLITE3_PATH") == null ? "sqlite3" : System.getenv("SQLITE3_PATH"), path, query, format};
+    //    return doSQL(cmd);
+    //}
 
     private String doSQL(String[] cmd){
         Runtime runtime = Runtime.getRuntime();

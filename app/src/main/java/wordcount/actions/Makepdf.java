@@ -82,12 +82,7 @@ public class Makepdf implements Action{
             }
             catch(IOException e){e.printStackTrace();}
         }
-        try {
-            Process process = runtime.exec(command);
-            process.waitFor();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+        execAndWait(command);
         for(MessageChannel channel : channels){
             System.out.println("generating for channel: "+ channel.getName());
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(".cache/build/index.tex"), true))){
@@ -145,21 +140,6 @@ public class Makepdf implements Action{
         }
         testExecute = true;
         return new CommandResponse() {
-            private void execAndWait(String[] command){
-                try {
-                    System.out.println(String.format("Launching process with args: [%s]", Arrays.asList(command).stream().collect(Collectors.joining(", "))));
-                    Process process = runtime.exec(command);
-                    for(String line : process.inputReader().lines().toList()) System.out.println(line);
-                    if(process.waitFor() != 0){
-                        System.err.println("Process failed!");
-                        for(String line : process.errorReader().lines().toList()) System.err.println(line);
-                    }
-                    System.out.println("Finished task!");
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-                
-            }
 
             @Override
             public void execute() {
@@ -195,6 +175,21 @@ public class Makepdf implements Action{
         assert testRespond;
         assert new File(outfile).exists();
         return true;
+    }
+    private void execAndWait(String[] command){
+        try {
+            System.out.println(String.format("Launching process with args: [%s]", Arrays.asList(command).stream().collect(Collectors.joining(", "))));
+            Process process = runtime.exec(command);
+            for(String line : process.inputReader().lines().toList()) System.out.println(line);
+            if(process.waitFor() != 0){
+                System.err.println("Process failed!");
+                for(String line : process.errorReader().lines().toList()) System.err.println(line);
+            }
+            System.out.println("Finished task!");
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        
     }
     
 }
