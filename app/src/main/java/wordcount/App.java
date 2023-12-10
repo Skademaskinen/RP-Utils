@@ -25,16 +25,24 @@ import wordcount.eventListeners.SlashCommandListener;
 
 public class App {
     protected JDA jda;
+    private static String token;
 
     public static void main(String[] args) {
+        token = Arrays.asList(args).contains("--debug") ? 
+            "ODU1MTQwNDg4NDk0NDQ4NjQw.Gw6Lty.a-tvq2DFozvwm1OgSHixRuVWg2e4F-ZG4Pktp4" : // Debug token
+            "MTE4Mjk3NDkxODQ1MTgwNjI5OQ.GQYpGF.w28r4Yu_HA4ZoVrVoSRUt5-VIFFGhUHTvHxllM"; // Live token
         App app = new App();
         app.initialize();
         app.registerActions();
     }
+    protected void initialize(String token) {
+        App.token = token;
+        initialize();
+    }
 
     protected void initialize(){
         System.out.println("Initializing");
-        JDABuilder builder = JDABuilder.createDefault("MTE4Mjk3NDkxODQ1MTgwNjI5OQ.GQYpGF.w28r4Yu_HA4ZoVrVoSRUt5-VIFFGhUHTvHxllM");
+        JDABuilder builder = JDABuilder.createDefault(token);
         builder.addEventListeners(new SlashCommandListener());
         builder.enableIntents(GatewayIntent.MESSAGE_CONTENT);
         builder.setActivity(Activity.playing("World of Warcraft"));

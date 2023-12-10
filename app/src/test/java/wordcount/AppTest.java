@@ -13,18 +13,19 @@ import org.junit.Assert;
 
 public class AppTest {
     App app;
+    String token = "ODU1MTQwNDg4NDk0NDQ4NjQw.Gw6Lty.a-tvq2DFozvwm1OgSHixRuVWg2e4F-ZG4Pktp4";
 
     public AppTest() {
         app = new App();
     }
     @Test public void testInitialize(){
-        app.initialize();
+        app.initialize(token);
         Assert.assertEquals(1, app.jda.getRegisteredListeners().size());
         Assert.assertTrue(app.jda.getGatewayIntents().contains(GatewayIntent.MESSAGE_CONTENT));
         app.jda.shutdown();
     }
     @Test public void testRegisterActions(){
-        app.initialize();
+        app.initialize(token);
         app.registerActions();
         Assert.assertEquals(Path.of("src/main/java/wordcount/actions").toFile().listFiles().length-1, app.jda.retrieveCommands().complete().size());
         app.jda.shutdown();

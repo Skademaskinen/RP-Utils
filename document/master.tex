@@ -1,12 +1,21 @@
 \documentclass[11pt,a4paper,openright]{report}
+\usepackage[a4paper, total={6.5in, 9.5in}]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{float}\usepackage{blindtext}
 \usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{xcolor}
+
+\definecolor{numbercolor}{gray}{0.7}
+
+\titleformat{\chapter}[display]{\normalfont\color{numbercolor}\Huge\bfseries}{\filleft\fontsize{60pt}{0pt}\selectfont\thechapter}{-32pt}{\selectfont\color{black}\normalfont\Huge}[\vspace{0pt}]
+\titlespacing{\chapter}{0pt}{-15pt}{20pt}
 
 \begin{document}
 \fontfamily{lmss}
 \pagestyle{empty}
+\tableofcontents
 \input{/tmp/wordcount-document/index.tex}
 \end{document}

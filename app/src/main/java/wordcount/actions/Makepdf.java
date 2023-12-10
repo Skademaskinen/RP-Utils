@@ -16,8 +16,6 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.Event;
@@ -56,17 +54,9 @@ public class Makepdf implements Action{
             channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getMessageChannel());}};
         }
         else if(((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().getType().equals(ChannelType.CATEGORY)){
-            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/tmp/wordcount-document/index.tex")))){
-                writer.append(String.format("\\chapter*{%s}", ((SlashCommandInteractionEvent)event).getGuild().getName()));
-            }
-            catch(IOException e){}
             channels = ((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().asCategory().getChannels().stream().filter(channel -> channel.getType().equals(ChannelType.TEXT)).map(channel -> (MessageChannel)channel).toList();
         }
         else{
-            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/tmp/wordcount-document/index.tex")))){
-                writer.append(String.format("\\chapter*{%s}\n", ((SlashCommandInteractionEvent)event).getGuild().getName()));
-            }
-            catch(IOException e){}
             channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().asTextChannel());}};
         }
     }
@@ -82,6 +72,12 @@ public class Makepdf implements Action{
     public CommandResponse execute() {
         // prepare
         String[] command = {System.getenv("BASH_PATH"), "../document/initialize-tex-env.sh"};
+        if(event != null){
+            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/tmp/wordcount-document/index.tex")))){
+                writer.append(String.format("\\begin{center}\n\\Huge{\\textbf{%s}}\n\\end{center}\n\\clearpage\n", ((SlashCommandInteractionEvent)event).getGuild().getName()));
+            }
+            catch(IOException e){e.printStackTrace();}
+        }
         try {
             Process process = runtime.exec(command);
             process.waitFor();
@@ -95,7 +91,7 @@ public class Makepdf implements Action{
             }
             catch(IOException e){e.printStackTrace();}
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(String.format("/tmp/wordcount-document/%s.tex", channel.getName()))))){
-                writer.append(String.format("\\section{%s}\n", channel.getName().replace("_", "\\_")));
+                writer.append(String.format("\\chapter{%s}\n", channel.getName().replace("_", "\\_")));
                 List<Message> messages = new ArrayList<>();
                 channel.getIterableHistory().forEach(message -> {
                     messages.add(message);
@@ -161,7 +157,7 @@ public class Makepdf implements Action{
                 }
                 outfile = String.format("../archive/document%s.pdf", new File("../archive").listFiles().length == 0 ? 0 : new File("../archive").listFiles().length);
                 String[] renderPdfCommand = {System.getenv("XELATEX_PATH"), "-interaction=nonstopmode", "-shell-escape", "../document/master.tex"};
-                String[] cleanupCommand = {"rm", "master.aux", "master.log"};
+                String[] cleanupCommand = {"rm", "master.aux", "master.log", "master.toc"};
                 String[] installCommand = {"mv", "master.pdf", outfile};
                 execAndWait(renderPdfCommand);
                 execAndWait(cleanupCommand);

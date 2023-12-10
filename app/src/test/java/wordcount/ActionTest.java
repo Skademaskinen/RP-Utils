@@ -11,16 +11,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.events.Event;
 import wordcount.Models.CommandResponse;
 import wordcount.actions.Action;
 
 public class ActionTest {
     App app;
+    String token = "ODU1MTQwNDg4NDk0NDQ4NjQw.Gw6Lty.a-tvq2DFozvwm1OgSHixRuVWg2e4F-ZG4Pktp4";
 
     public ActionTest() {
         app = new App();
-        app.initialize();
+        app.initialize(token);
     }
 
     @Test @SuppressWarnings("unchecked")
