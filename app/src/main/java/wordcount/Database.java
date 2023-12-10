@@ -20,12 +20,12 @@ public class Database {
     }
 
     private String doSQL(String query){
-        String[] cmd = {System.getenv("SQLITE3_PATH"), path, query};
+        String[] cmd = {System.getenv("SQLITE3_PATH").equals("") ? "sqlite3" : System.getenv("SQLITE3_PATH"), path, query};
         return doSQL(cmd);
     }
 
     private String doSQL(String query, String format){
-        String[] cmd = {System.getenv("SQLITE3_PATH"), path, query, format};
+        String[] cmd = {System.getenv("SQLITE3_PATH").equals("") ? "sqlite3" : System.getenv("SQLITE3_PATH"), path, query, format};
         return doSQL(cmd);
     }
 

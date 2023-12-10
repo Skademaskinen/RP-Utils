@@ -75,7 +75,7 @@ public class Makepdf implements Action{
     @Override @SuppressWarnings("deprecation")
     public CommandResponse execute() {
         // prepare
-        String[] command = {System.getenv("BASH_PATH"), "../document/initialize-tex-env.sh"};
+        String[] command = {System.getenv("BASH_PATH").equals("") ? "bash" : System.getenv("BASH_PATH"), "../document/initialize-tex-env.sh"};
         if(event != null){
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(".cache/build/index.tex")))){
                 writer.append(String.format("\\begin{center}\n\\Huge{\\textbf{%s}}\n\\end{center}\n\\clearpage\n", ((SlashCommandInteractionEvent)event).getGuild().getName()));
@@ -171,7 +171,7 @@ public class Makepdf implements Action{
                     e.printStackTrace();
                 }
                 outfile = String.format("../archive/document%s.pdf", new File("../archive").listFiles().length == 0 ? 0 : new File("../archive").listFiles().length);
-                String[] renderPdfCommand = {System.getenv("XELATEX_PATH"), "-interaction=nonstopmode", "-shell-escape", "../document/master.tex"};
+                String[] renderPdfCommand = {System.getenv("XELATEX_PATH").equals("") ? "xelatex" : System.getenv("XELATEX_PATH"), "-interaction=nonstopmode", "-shell-escape", "../document/master.tex"};
                 String[] cleanupCommand = {"rm", "master.aux", "master.log", "master.toc"};
                 String[] installCommand = {"mv", "master.pdf", outfile};
                 execAndWait(renderPdfCommand);
