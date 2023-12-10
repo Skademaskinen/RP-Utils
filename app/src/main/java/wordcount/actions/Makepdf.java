@@ -24,6 +24,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.utils.AttachedFile;
+import wordcount.Cache;
 import wordcount.Models.CommandResponse;
 
 public class Makepdf implements Action{
@@ -33,6 +34,7 @@ public class Makepdf implements Action{
     private GuildChannelUnion target;
     private List<MessageChannel> channels;
     private boolean test = false;
+    private boolean update = false;
     private String outfile;
     public boolean testExecute = false;
     public boolean testRespond = false;
@@ -49,6 +51,7 @@ public class Makepdf implements Action{
         ((SlashCommandInteractionEvent)event).deferReply(true).queue();
         target = ((SlashCommandInteractionEvent)event).getOption("target").getAsChannel();
         debug = ((SlashCommandInteractionEvent)event).getOption("debug") == null ? false : ((SlashCommandInteractionEvent)event).getOption("debug").getAsBoolean();
+        update = ((SlashCommandInteractionEvent)event).getOption("updatecache") == null ? false : ((SlashCommandInteractionEvent)event).getOption("updatecache").getAsBoolean();
 
         if(((SlashCommandInteractionEvent)event).getMessageChannel().getType().equals(ChannelType.PRIVATE)){
             channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getMessageChannel());}};
@@ -65,7 +68,8 @@ public class Makepdf implements Action{
     public CommandData initialize() {
         return Commands.slash(this.getClass().getSimpleName().toLowerCase(), "Generate a PDF format of this server")
             .addOption(OptionType.CHANNEL, "target", "Specify a category or channel to generate from", true)
-            .addOption(OptionType.BOOLEAN, "debug", "Enable debug mode", false);
+            .addOption(OptionType.BOOLEAN, "debug", "Enable debug mode", false)
+            .addOption(OptionType.BOOLEAN, "updatecache", "Update the cache of files", false);
     }
 
     @Override @SuppressWarnings("deprecation")
@@ -73,7 +77,7 @@ public class Makepdf implements Action{
         // prepare
         String[] command = {System.getenv("BASH_PATH"), "../document/initialize-tex-env.sh"};
         if(event != null){
-            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/tmp/wordcount-document/index.tex")))){
+            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(".cache/build/index.tex")))){
                 writer.append(String.format("\\begin{center}\n\\Huge{\\textbf{%s}}\n\\end{center}\n\\clearpage\n", ((SlashCommandInteractionEvent)event).getGuild().getName()));
             }
             catch(IOException e){e.printStackTrace();}
@@ -86,11 +90,11 @@ public class Makepdf implements Action{
         }
         for(MessageChannel channel : channels){
             System.out.println("generating for channel: "+ channel.getName());
-            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/tmp/wordcount-document/index.tex"), true))){
-                writer.append(String.format("\\input{/tmp/wordcount-document/%s.tex}\n", channel.getName()));
+            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(".cache/build/index.tex"), true))){
+                writer.append(String.format("\\input{.cache/build/%s.tex}\n", channel.getName()));
             }
             catch(IOException e){e.printStackTrace();}
-            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(String.format("/tmp/wordcount-document/%s.tex", channel.getName()))))){
+            try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(String.format(".cache/build/%s.tex", channel.getName()))))){
                 writer.append(String.format("\\chapter{%s}\n", channel.getName().replace("_", "\\_")));
                 List<Message> messages = new ArrayList<>();
                 channel.getIterableHistory().forEach(message -> {
@@ -98,16 +102,20 @@ public class Makepdf implements Action{
                     System.out.println("Processing new message: "+message.getId());
                 });
                 for(Message message : messages.reversed()){
+                    
                     String paragraph, content;
                     if(message.getContentDisplay().split(" ").length > 1){
                         String allowedCharsRegex = "[\\w\\s\\?.,/æøåÆØÅ\"#()<>:;']";
-                        String messageContent = message.getContentDisplay().chars().mapToObj(c -> String.valueOf((char)c)).filter(c -> c.matches(allowedCharsRegex)).map(c -> c.matches("[_%#]") ? "\\"+c : c).collect(Collectors.joining());
+                        String messageContent = Cache.messageCached(message) && !update ? Cache.getMessageContent(message) : message.getContentDisplay().chars().mapToObj(c -> String.valueOf((char)c)).filter(c -> c.matches(allowedCharsRegex)).map(c -> c.matches("[_%#]") ? "\\"+c : c).collect(Collectors.joining());
                         paragraph = messageContent.replace("\n", " ").split(" ",2)[0];
                         content = messageContent.substring(paragraph.length());
                     }
                     else{
                         paragraph = message.getAuthor().getName().replace("_", "\\_") + message.getId();
                         content = "error";
+                    }
+                    if(!Cache.messageCached(message)) {
+                        Cache.saveCache(message);
                     }
                     try {
                         if(!content.equals("error") || debug){
@@ -119,9 +127,16 @@ public class Makepdf implements Action{
                     // maybe do attachments as well?
                     for(Attachment attachment : message.getAttachments().stream().filter(attachment -> attachment.isImage()).collect(Collectors.toList())){
                         if(attachment.getFileName().length() > 50 || attachment.getFileExtension().matches("gif|webp")) continue;
-                        File image = attachment.downloadToFile("/tmp/wordcount-document/"+message.getId()+"."+attachment.getFileName()).get();
-                        System.out.println("Got image: "+image.getName());
-                        writer.append(String.format("\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=\\textwidth]{%s}\n \\end{figure}\n", "/tmp/wordcount-document/"+image.getName()));
+                        String filename = String.format(".cache/%s/%s", message.getId(), attachment.getFileName());
+                        File image;
+                        if(Cache.imageCached(message, new File(filename))){
+                            image = new File(filename);
+                        }
+                        else{
+                            image = attachment.downloadToFile(filename).get();
+                            System.out.println("Got image: "+image.getName());
+                        }
+                        writer.append(String.format("\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=\\textwidth]{%s}\n \\end{figure}\n", filename));
                     }
                 };
                 System.out.println("finished writing!");

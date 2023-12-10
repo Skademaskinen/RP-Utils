@@ -1,5 +1,5 @@
-rm -rf /tmp/wordcount-document
+rm -rf .cache/build
 
-mkdir /tmp/wordcount-document
+mkdir .cache/build
 
-touch /tmp/wordcount-document/index.tex 
+touch .cache/build/index.tex 
