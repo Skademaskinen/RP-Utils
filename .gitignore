@@ -5,3 +5,4 @@
 *.tar
 *.class
 app/build
+*.toc

@@ -160,6 +160,7 @@ public class Makepdf implements Action{
                 String[] cleanupCommand = {"rm", "master.aux", "master.log", "master.toc"};
                 String[] installCommand = {"mv", "master.pdf", outfile};
                 execAndWait(renderPdfCommand);
+                execAndWait(renderPdfCommand);
                 execAndWait(cleanupCommand);
                 execAndWait(installCommand);
                 if(!test){
