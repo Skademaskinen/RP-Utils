@@ -4,4 +4,4 @@ mkdir -p .cache/build
 
 touch .cache/build/index.tex 
 
-mkdir -f ../archive
+mkdir -p ../archive
