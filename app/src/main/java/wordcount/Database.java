@@ -34,7 +34,6 @@ public class Database {
         try {
             Process process = runtime.exec(cmd);
             process.waitFor();
-            for(String line : process.inputReader().lines().toList()) System.out.println(line);
             for(String line : process.errorReader().lines().toList()){
                 System.err.println(line);
             }
@@ -59,6 +58,6 @@ public class Database {
     }
 
     public void addMessage(Message message){
-        doSQL(String.format("insert into m%s values('%s', '%s')", message.getChannelId(), message.getId(), message.getContentDisplay()));
+        doSQL(String.format("insert or replace into m%s values('%s', '%s')", message.getChannelId(), message.getId(), message.getContentDisplay().replace("'", "''")));
     }
 }
