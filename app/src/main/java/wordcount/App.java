@@ -3,6 +3,7 @@
  */
 package wordcount;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -26,14 +27,25 @@ import wordcount.eventListeners.SlashCommandListener;
 public class App {
     protected JDA jda;
     private static String token;
+    public static boolean debug;
 
     public static void main(String[] args) {
-        token = Arrays.asList(args).contains("--debug") ? 
+        debug = Arrays.asList(args).contains("--debug");
+        token = debug ? 
             "ODU1MTQwNDg4NDk0NDQ4NjQw.Gw6Lty.a-tvq2DFozvwm1OgSHixRuVWg2e4F-ZG4Pktp4" : // Debug token
             "MTE4Mjk3NDkxODQ1MTgwNjI5OQ.GQYpGF.w28r4Yu_HA4ZoVrVoSRUt5-VIFFGhUHTvHxllM"; // Live token
         App app = new App();
         app.initialize();
         app.registerActions();
+
+        // start webserver
+        String[] webserver_command = {System.getenv("PYTHON_EXE_PATH") == null ? "python" : System.getenv("PYTHON_EXE_PATH"), "../webserver/webserver.py"};
+        try {
+            Process process = Runtime.getRuntime().exec(webserver_command);
+            process.waitFor();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
     protected void initialize(String token) {
         App.token = token;

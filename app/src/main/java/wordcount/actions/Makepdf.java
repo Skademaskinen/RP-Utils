@@ -24,6 +24,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.utils.AttachedFile;
+import wordcount.App;
 import wordcount.Cache;
 import wordcount.Models.CommandResponse;
 
@@ -94,7 +95,7 @@ public class Makepdf implements Action{
                 List<Message> messages = new ArrayList<>();
                 channel.getIterableHistory().forEach(message -> {
                     messages.add(message);
-                    System.out.println("Processing new message: "+message.getId());
+                    System.out.println("["+channel.getName()+"] New message: "+message.getId());
                 });
                 for(Message message : messages.reversed()){
                     
@@ -129,7 +130,7 @@ public class Makepdf implements Action{
                         }
                         else{
                             image = attachment.downloadToFile(filename).get();
-                            System.out.println("Got image: "+image.getName());
+                            System.out.println("["+channel.getName()+"] Got image: "+image.getName());
                         }
                         writer.append(String.format("\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=\\textwidth]{%s}\n \\end{figure}\n", filename));
                     }
@@ -159,7 +160,12 @@ public class Makepdf implements Action{
                 execAndWait(cleanupCommand);
                 execAndWait(installCommand);
                 if(!test){
-                    ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(outfile))).queue();
+                    if(new File(outfile).length() <= ((SlashCommandInteractionEvent)event).getGuild().getMaxFileSize()){
+                        ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(outfile))).queue();
+                    }
+                    else{
+                        ((SlashCommandInteractionEvent)event).getHook().editOriginal(String.format("Finished execution!\nFile size is too large for discord, here is a download link\n%s", App.debug ? "http://localhost:8123/"+outfile.split("/")[outfile.split("/").length-1] : "https://skademaskinen.win:11034/document/"+outfile.split("/")[outfile.split("/").length-1])).queue();
+                    }
                 }
                 else{
                     System.out.println("Finished execution\n"+String.format("../archive/document%d.pdf", new File("../archive").listFiles().length-1));
