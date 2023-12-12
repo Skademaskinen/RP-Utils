@@ -104,7 +104,6 @@ public class Makepdf implements Action{
                 });
                 for(Message message : messages.reversed()){
                     counter++;
-                    System.out.println((counter/messages.size()));
                     if(((counter/messages.size())) > percentage){
                         percentage+=0.1;
                         percentages.put(channel, (int)(percentage*100));
