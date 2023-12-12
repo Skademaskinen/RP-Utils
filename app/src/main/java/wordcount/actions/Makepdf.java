@@ -107,7 +107,9 @@ public class Makepdf implements Action{
                     if(((counter/messages.size())) > percentage){
                         percentage+=0.1;
                         percentages.put(channel, (int)(percentage*100));
-                        ((SlashCommandInteractionEvent)event).getHook().editOriginal(percentages.keySet().stream().map(key -> String.format("`%s: %s`\n", key.getName(), percentages.get(key))).collect(Collectors.joining("\n"))).queue();
+                        if(!test){
+                            ((SlashCommandInteractionEvent)event).getHook().editOriginal("```\n"+percentages.keySet().stream().map(key -> String.format("%s: %s", key.getName(), percentages.get(key))).collect(Collectors.joining("\n"))+"\n```").queue();
+                        }
                     }
                     
                     String paragraph, content;
