@@ -109,7 +109,7 @@ public class Makepdf implements Action{
                         percentage+=0.1;
                         percentages.put(channel, (int)(percentage*100));
                         if(!test){
-                            ((SlashCommandInteractionEvent)event).getHook().editOriginal("```\n"+percentages.keySet().stream().map(key -> String.format("%s: %s%", key.getName(), percentages.get(key))).collect(Collectors.joining("\n"))+"\n```").queue();
+                            ((SlashCommandInteractionEvent)event).getHook().editOriginal("```\n"+percentages.keySet().stream().map(key -> String.format("%s: %s%%", key.getName(), percentages.get(key))).collect(Collectors.joining("\n"))+"\n```").queue();
                         }
                     }
                     
