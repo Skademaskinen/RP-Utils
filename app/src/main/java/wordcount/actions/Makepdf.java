@@ -51,7 +51,7 @@ public class Makepdf implements Action{
     }
     public Makepdf(Event event) {
         this.event = event;
-        ((SlashCommandInteractionEvent)event).deferReply(true).queue();
+        ((SlashCommandInteractionEvent)event).deferReply(false).queue();
         target = ((SlashCommandInteractionEvent)event).getOption("target").getAsChannel();
         debug = ((SlashCommandInteractionEvent)event).getOption("debug") == null ? false : ((SlashCommandInteractionEvent)event).getOption("debug").getAsBoolean();
         update = ((SlashCommandInteractionEvent)event).getOption("updatecache") == null ? false : ((SlashCommandInteractionEvent)event).getOption("updatecache").getAsBoolean();
@@ -104,7 +104,6 @@ public class Makepdf implements Action{
                 });
                 for(Message message : messages.reversed()){
                     counter++;
-                    System.out.println((counter/messages.size()));
                     if(((counter/messages.size())) > percentage){
                         percentage+=0.1;
                         percentages.put(channel, (int)(percentage*100));
@@ -112,20 +111,21 @@ public class Makepdf implements Action{
                             ((SlashCommandInteractionEvent)event).getHook().editOriginal("```\n"+percentages.keySet().stream().sorted((e1, e2) -> Integer.compare(percentages.get(e2), percentages.get(e1))).map(key -> String.format("%s: %s%%", key.getName(), percentages.get(key))).collect(Collectors.joining("\n"))+"\n```").queue();
                         }
                     }
-                    
-                    String paragraph, content;
-                    if(message.getContentDisplay().split(" ").length > 1){
-                        String allowedCharsRegex = "[\\w\\s\\?.,/æøåÆØÅ\"#()<>:;']";
-                        String messageContent = Cache.messageCached(message) && !update ? Cache.getMessageContent(message) : message.getContentDisplay().chars().mapToObj(c -> String.valueOf((char)c)).filter(c -> c.matches(allowedCharsRegex)).map(c -> c.matches("[_%#]") ? "\\"+c : c).collect(Collectors.joining());
+                    System.out.println("Getting message content");
+                    String paragraph, content;                        
+                    String allowedCharsRegex = "[\\w\\s\\?.,/æøåÆØÅ\"#()<>:;']";
+                    String messageContent = Cache.messageCached(message) && !update ? Cache.getMessageContent(message) : message.getContentDisplay().chars().mapToObj(c -> String.valueOf((char)c)).filter(c -> c.matches(allowedCharsRegex)).map(c -> c.matches("[_%#]") ? "\\"+c : c).collect(Collectors.joining());
+                    if(messageContent.split(" ").length > 1){
                         paragraph = messageContent.replace("\n", " ").split(" ",2)[0];
                         content = messageContent.substring(paragraph.length());
+                        System.out.println("Checking cache");
+                        if(!Cache.messageCached(message)) {
+                            Cache.saveCache(message);
+                        }
                     }
                     else{
-                        paragraph = message.getAuthor().getName().replace("_", "\\_") + message.getId();
+                        paragraph = "error";
                         content = "error";
-                    }
-                    if(!Cache.messageCached(message)) {
-                        Cache.saveCache(message);
                     }
                     try {
                         if(!content.equals("error") || debug){
@@ -134,6 +134,7 @@ public class Makepdf implements Action{
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    System.out.println("Processing attachments");
                     // maybe do attachments as well?
                     for(Attachment attachment : message.getAttachments().stream().filter(attachment -> attachment.isImage()).collect(Collectors.toList())){
                         if(attachment.getFileName().length() > 50 || attachment.getFileExtension().matches("gif|webp")) continue;
@@ -149,7 +150,7 @@ public class Makepdf implements Action{
                         writer.append(String.format("\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=\\textwidth]{%s}\n \\end{figure}\n", filename));
                     }
                 };
-                System.out.println("finished writing!");
+                System.out.println("finished writing chapter!");
             }
             catch(IOException | InterruptedException | ExecutionException e){e.printStackTrace();}
         }
