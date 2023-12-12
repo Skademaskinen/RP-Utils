@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
@@ -37,6 +38,7 @@ public class Makepdf implements Action{
     private boolean test = false;
     private boolean update = false;
     private String outfile;
+    private Map<MessageChannel, Integer> percentages;
     public boolean testExecute = false;
     public boolean testRespond = false;
 
@@ -63,6 +65,7 @@ public class Makepdf implements Action{
         else{
             channels = new ArrayList<>(){{add(((SlashCommandInteractionEvent)event).getOption("target").getAsChannel().asTextChannel());}};
         }
+        percentages = new HashMap<>(){{channels.stream().forEach(channel -> put(channel, 0));}};
     }
 
     @Override
@@ -85,6 +88,8 @@ public class Makepdf implements Action{
         }
         execAndWait(command);
         for(MessageChannel channel : channels){
+            int counter = 0;
+            float percentage = 0;
             System.out.println("generating for channel: "+ channel.getName());
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(".cache/build/index.tex"), true))){
                 writer.append(String.format("\\input{.cache/build/%s.tex}\n", channel.getName()));
@@ -98,6 +103,12 @@ public class Makepdf implements Action{
                     System.out.println("["+channel.getName()+"] New message: "+message.getId());
                 });
                 for(Message message : messages.reversed()){
+                    counter++;
+                    if(((counter/messages.size())) > percentage){
+                        percentage+=0.1;
+                        percentages.put(channel, (int)(percentage*100));
+                        ((SlashCommandInteractionEvent)event).getHook().editOriginal(percentages.keySet().stream().map(key -> String.format("`%s: %s`\n", key.getName(), percentages.get(key))).collect(Collectors.joining("\n"))).queue();
+                    }
                     
                     String paragraph, content;
                     if(message.getContentDisplay().split(" ").length > 1){
