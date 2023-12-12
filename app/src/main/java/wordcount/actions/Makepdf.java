@@ -88,7 +88,7 @@ public class Makepdf implements Action{
         }
         execAndWait(command);
         for(MessageChannel channel : channels){
-            int counter = 0;
+            float counter = 0;
             float percentage = 0;
             System.out.println("generating for channel: "+ channel.getName());
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(new File(".cache/build/index.tex"), true))){
@@ -104,6 +104,7 @@ public class Makepdf implements Action{
                 });
                 for(Message message : messages.reversed()){
                     counter++;
+                    System.out.println((counter/messages.size()));
                     if(((counter/messages.size())) > percentage){
                         percentage+=0.1;
                         percentages.put(channel, (int)(percentage*100));
