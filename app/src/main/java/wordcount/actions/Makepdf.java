@@ -39,6 +39,7 @@ public class Makepdf implements Action{
     private boolean update = false;
     private String outfile;
     private Map<MessageChannel, Integer> percentages;
+    private Message message;
     public boolean testExecute = false;
     public boolean testRespond = false;
 
@@ -51,7 +52,7 @@ public class Makepdf implements Action{
     }
     public Makepdf(Event event) {
         this.event = event;
-        ((SlashCommandInteractionEvent)event).deferReply(false).queue();
+        message = ((SlashCommandInteractionEvent)event).deferReply(false).complete().retrieveOriginal().complete();
         target = ((SlashCommandInteractionEvent)event).getOption("target").getAsChannel();
         debug = ((SlashCommandInteractionEvent)event).getOption("debug") == null ? false : ((SlashCommandInteractionEvent)event).getOption("debug").getAsBoolean();
         update = ((SlashCommandInteractionEvent)event).getOption("updatecache") == null ? false : ((SlashCommandInteractionEvent)event).getOption("updatecache").getAsBoolean();
@@ -176,10 +177,10 @@ public class Makepdf implements Action{
                 execAndWait(installCommand);
                 if(!test){
                     if(new File(outfile).length() <= ((SlashCommandInteractionEvent)event).getGuild().getMaxFileSize()){
-                        ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(outfile))).queue();
+                        message.editMessage("Finished execution").setAttachments(AttachedFile.fromData(new File(outfile))).queue();
                     }
                     else{
-                        ((SlashCommandInteractionEvent)event).getChannel().retrieveMessageById(((SlashCommandInteractionEvent)event).getHook().retrieveOriginal().complete().getId()).complete().editMessage(String.format("Finished execution!\nFile size is too large for discord, here is a download link\n%s", App.debug ? "http://localhost:8123/"+outfile.split("/")[outfile.split("/").length-1] : "https://skademaskinen.win:11034/document/"+outfile.split("/")[outfile.split("/").length-1])).queue();
+                        message.editMessage(String.format("Finished execution!\nFile size is too large for discord, here is a download link\n%s", App.debug ? "http://localhost:8123/"+outfile.split("/")[outfile.split("/").length-1] : "https://skademaskinen.win:11034/document/"+outfile.split("/")[outfile.split("/").length-1])).queue();
                     }
                 }
                 else{
