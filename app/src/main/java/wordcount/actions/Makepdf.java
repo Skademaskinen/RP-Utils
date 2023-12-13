@@ -111,14 +111,14 @@ public class Makepdf implements Action{
                             ((SlashCommandInteractionEvent)event).getHook().editOriginal("```\n"+percentages.keySet().stream().sorted((e1, e2) -> Integer.compare(percentages.get(e2), percentages.get(e1))).map(key -> String.format("%s: %s%%", key.getName(), percentages.get(key))).collect(Collectors.joining("\n"))+"\n```").queue();
                         }
                     }
-                    System.out.println("Getting message content");
+                    System.out.println("["+channel.getName()+"] Getting message content");
                     String paragraph, content;                        
                     String allowedCharsRegex = "[\\w\\s\\?.,/æøåÆØÅ\"#()<>:;']";
                     String messageContent = Cache.messageCached(message) && !update ? Cache.getMessageContent(message) : message.getContentDisplay().chars().mapToObj(c -> String.valueOf((char)c)).filter(c -> c.matches(allowedCharsRegex)).map(c -> c.matches("[_%#]") ? "\\"+c : c).collect(Collectors.joining());
                     if(messageContent.split(" ").length > 1){
                         paragraph = messageContent.replace("\n", " ").split(" ",2)[0];
                         content = messageContent.substring(paragraph.length());
-                        System.out.println("Checking cache");
+                        System.out.println("["+channel.getName()+"] Checking cache");
                         if(!Cache.messageCached(message)) {
                             Cache.saveCache(message);
                         }
@@ -134,7 +134,7 @@ public class Makepdf implements Action{
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    System.out.println("Processing attachments");
+                    System.out.println("["+channel.getName()+"] Processing attachments");
                     // maybe do attachments as well?
                     for(Attachment attachment : message.getAttachments().stream().filter(attachment -> attachment.isImage()).collect(Collectors.toList())){
                         if(attachment.getFileName().length() > 50 || attachment.getFileExtension().matches("gif|webp")) continue;
@@ -150,7 +150,7 @@ public class Makepdf implements Action{
                         writer.append(String.format("\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=\\textwidth]{%s}\n \\end{figure}\n", filename));
                     }
                 };
-                System.out.println("finished writing chapter!");
+                System.out.println("["+channel.getName()+"] finished writing chapter!");
             }
             catch(IOException | InterruptedException | ExecutionException e){e.printStackTrace();}
         }
@@ -179,7 +179,7 @@ public class Makepdf implements Action{
                         ((SlashCommandInteractionEvent)event).getHook().editOriginal("Finished execution").setAttachments(AttachedFile.fromData(new File(outfile))).queue();
                     }
                     else{
-                        ((SlashCommandInteractionEvent)event).getHook().editOriginal(String.format("Finished execution!\nFile size is too large for discord, here is a download link\n%s", App.debug ? "http://localhost:8123/"+outfile.split("/")[outfile.split("/").length-1] : "https://skademaskinen.win:11034/document/"+outfile.split("/")[outfile.split("/").length-1])).queue();
+                        ((SlashCommandInteractionEvent)event).getChannel().retrieveMessageById(((SlashCommandInteractionEvent)event).getHook().retrieveOriginal().complete().getId()).complete().editMessage(String.format("Finished execution!\nFile size is too large for discord, here is a download link\n%s", App.debug ? "http://localhost:8123/"+outfile.split("/")[outfile.split("/").length-1] : "https://skademaskinen.win:11034/document/"+outfile.split("/")[outfile.split("/").length-1])).queue();
                     }
                 }
                 else{
