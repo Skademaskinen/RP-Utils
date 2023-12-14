@@ -120,13 +120,13 @@ public class Makepdf implements Action{
                         paragraph = messageContent.replace("\n", " ").split(" ",2)[0];
                         content = messageContent.substring(paragraph.length());
                         System.out.println("["+channel.getName()+"] Checking cache");
-                        if(!Cache.messageCached(message)) {
-                            Cache.saveCache(message);
-                        }
                     }
                     else{
                         paragraph = "error";
                         content = "error";
+                    }
+                    if(!Cache.messageCached(message)) {
+                        Cache.saveCache(message);
                     }
                     try {
                         if(!content.equals("error") || debug){
@@ -139,7 +139,6 @@ public class Makepdf implements Action{
                     // maybe do attachments as well?
                     for(Attachment attachment : message.getAttachments().stream().filter(attachment -> attachment.isImage()).collect(Collectors.toList())){
                         if(attachment.getFileName().length() > 50 || attachment.getFileExtension().matches("gif|webp")) continue;
-                        new File(String.format(".cache/%s", message.getId())).mkdirs();
                         String filename = String.format(".cache/%s/%s", message.getId(), attachment.getFileName());
                         File image;
                         if(Cache.imageCached(message, new File(filename))){
