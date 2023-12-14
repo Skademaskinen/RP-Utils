@@ -139,6 +139,7 @@ public class Makepdf implements Action{
                     // maybe do attachments as well?
                     for(Attachment attachment : message.getAttachments().stream().filter(attachment -> attachment.isImage()).collect(Collectors.toList())){
                         if(attachment.getFileName().length() > 50 || attachment.getFileExtension().matches("gif|webp")) continue;
+                        new File(String.format(".cache/%s", message.getId())).mkdirs();
                         String filename = String.format(".cache/%s/%s", message.getId(), attachment.getFileName());
                         File image;
                         if(Cache.imageCached(message, new File(filename))){
