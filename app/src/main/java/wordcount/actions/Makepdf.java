@@ -152,6 +152,7 @@ public class Makepdf implements Action{
                     }
                 };
                 System.out.println("["+channel.getName()+"] finished writing chapter!");
+                percentages.put(channel, 100);
             }
             catch(IOException | InterruptedException | ExecutionException e){e.printStackTrace();}
         }
