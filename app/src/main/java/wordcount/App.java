@@ -42,6 +42,9 @@ public class App {
         try(BufferedReader reader = new BufferedReader(new FileReader(new File(configPath+"/config.txt")))){
             token = reader.readLine();
         }
+        if(token == null && System.getenv("RP_UTILS_TOKEN") != null){
+            token = System.getenv("RP_UTILS_TOKEN");
+        }
         App app = new App();
         app.initialize();
         app.registerActions();
