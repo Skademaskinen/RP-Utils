@@ -3,6 +3,10 @@
  */
 package wordcount;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -28,12 +32,16 @@ public class App {
     protected JDA jda;
     private static String token;
     public static boolean debug;
+    public static String configPath;
+    public static String sourcePath;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException, IOException {
+        configPath = Arrays.asList(args).contains("--config") ? args[Arrays.asList(args).indexOf("--config")+1] : "./config";
+        sourcePath = Arrays.asList(args).contains("--source") ? args[Arrays.asList(args).indexOf("--source")+1] : "./app";
         debug = Arrays.asList(args).contains("--debug");
-        token = debug ? 
-            "ODU1MTQwNDg4NDk0NDQ4NjQw.Gw6Lty.a-tvq2DFozvwm1OgSHixRuVWg2e4F-ZG4Pktp4" : // Debug token
-            "MTE4Mjk3NDkxODQ1MTgwNjI5OQ.GQYpGF.w28r4Yu_HA4ZoVrVoSRUt5-VIFFGhUHTvHxllM"; // Live token
+        try(BufferedReader reader = new BufferedReader(new FileReader(new File(configPath+"/config.txt")))){
+            token = reader.readLine();
+        }
         App app = new App();
         app.initialize();
         app.registerActions();
@@ -70,7 +78,7 @@ public class App {
     }
     protected void registerActions(){
         List<CommandData> commands = new ArrayList<>();
-        Path path = Path.of("src/main/java/wordcount/actions").toAbsolutePath();
+        Path path = Path.of(sourcePath+"/src/main/java/wordcount/actions").toAbsolutePath();
         System.out.println("Got actions path: " + path.toFile());
         for(Class<?> action : Arrays.asList(path.toFile().listFiles())
             .stream()
