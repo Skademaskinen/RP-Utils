@@ -42,6 +42,7 @@ public class App {
         try(BufferedReader reader = new BufferedReader(new FileReader(new File(configPath+"/config.txt")))){
             token = reader.readLine();
         }
+        System.out.println("Is envvar set correctly? "+ System.getenv("RP_UTILS_TOKEN") == null);
         if(token == null && System.getenv("RP_UTILS_TOKEN") != null){
             token = System.getenv("RP_UTILS_TOKEN");
         }
