@@ -13,12 +13,14 @@ import org.junit.Assert;
 
 public class AppTest {
     App app;
-    String token = "ODU1MTQwNDg4NDk0NDQ4NjQw.Gw6Lty.a-tvq2DFozvwm1OgSHixRuVWg2e4F-ZG4Pktp4";
+    String token;
 
     public AppTest() {
         app = new App();
     }
     @Test public void testInitialize(){
+        System.out.println("Is envvar set correctly? "+ System.getenv("RP_UTILS_TOKEN") == null);
+        token = System.getenv("RP_UTILS_TOKEN");
         app.initialize(token);
         Assert.assertEquals(1, app.jda.getRegisteredListeners().size());
         Assert.assertTrue(app.jda.getGatewayIntents().contains(GatewayIntent.MESSAGE_CONTENT));
