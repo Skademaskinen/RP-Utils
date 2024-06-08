@@ -50,12 +50,12 @@ public class Roll implements Action{
                     return;
                 }
                 for(String dies : diesOption.split(" ")){
-                    if(dies.contains("d")){
+                    if(dies.matches("\\d+d\\d+")){
                         int count = Integer.parseInt(dies.split("d")[0]);
                         int size = Integer.parseInt(dies.split("d")[1]);
                         all_results.put(size, roll(count, size));
                     }
-                    else if(dies.matches("^[+-]?\\d+$")){
+                    else if(dies.matches("^[+-]\\d+$")){
                         if(dies.charAt(0) == '+')
                             total += Integer.parseInt(dies.substring(1));
                         else
