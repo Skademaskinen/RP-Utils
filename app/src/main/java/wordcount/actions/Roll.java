@@ -26,7 +26,7 @@ public class Roll implements Action{
     @Override
     public CommandData initialize() {
         return Commands.slash("roll", "Roll a die")
-            .addOption(OptionType.STRING, "dies", "Specify dies: <n>d<s> where n is number and s is size, multiple are seperated by space");
+            .addOption(OptionType.STRING, "dies", "Specify dies: <n>d<s> where n is number and s is size, multiple are seperated by space", true);
     }
 
     public Roll(){}
