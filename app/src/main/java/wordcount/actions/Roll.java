@@ -1,5 +1,6 @@
 package wordcount.actions;
 
+import java.lang.StackWalker.Option;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -21,18 +22,24 @@ public class Roll implements Action{
 
     private Event event;
     private String diesOption;
+    private boolean doubleOption;
+    private boolean halfOption;
 
 
     @Override
     public CommandData initialize() {
         return Commands.slash("roll", "Roll a die")
-            .addOption(OptionType.STRING, "dies", "Specify dies: <n>d<s> where n is number and s is size, multiple are seperated by space", true);
+            .addOption(OptionType.STRING, "dies", "Specify dies: <n>d<s> where n is number and s is size, multiple are seperated by space", true)
+            .addOption(OptionType.BOOLEAN, "double", "Double the result?", false)
+            .addOption(OptionType.BOOLEAN, "half", "Half the result?", false);
     }
 
     public Roll(){}
     public Roll(Event event) {
         this.event = event;
         this.diesOption = ((SlashCommandInteractionEvent)event).getOption("dies").getAsString();
+        this.doubleOption = ((SlashCommandInteractionEvent)event).getOption("double").getAsBoolean();
+        this.halfOption = ((SlashCommandInteractionEvent)event).getOption("half").getAsBoolean();
     }
 
     @Override
@@ -69,6 +76,10 @@ public class Roll implements Action{
                     outstr += "**d"+size+":** ["+entry.getValue().stream().map(String::valueOf).collect(Collectors.joining(", "))+"]\n";
                     total += entry.getValue().stream().reduce(0, Integer::sum);
                 }
+                if(doubleOption)
+                    total = total*2;
+                if(halfOption)
+                    total = total/2;
                 outstr += "**Total:** "+total;
                 ((SlashCommandInteractionEvent)event).reply(outstr).queue();
             }
