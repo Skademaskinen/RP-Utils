@@ -22,7 +22,7 @@ public class Roll implements Action{
 
     private Event event;
     private String diesOption;
-    private boolean doubleOption;
+    private boolean doubleOption = false;
     private boolean halfOption;
 
 
@@ -38,8 +38,10 @@ public class Roll implements Action{
     public Roll(Event event) {
         this.event = event;
         this.diesOption = ((SlashCommandInteractionEvent)event).getOption("dies").getAsString();
-        this.doubleOption = ((SlashCommandInteractionEvent)event).getOption("double").getAsBoolean();
-        this.halfOption = ((SlashCommandInteractionEvent)event).getOption("half").getAsBoolean();
+        if(((SlashCommandInteractionEvent)event).getOption("double") != null)
+            this.doubleOption = ((SlashCommandInteractionEvent)event).getOption("double").getAsBoolean();
+        if(((SlashCommandInteractionEvent)event).getOption("half") != null)
+            this.halfOption = ((SlashCommandInteractionEvent)event).getOption("half").getAsBoolean();
     }
 
     @Override
