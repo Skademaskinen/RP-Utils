@@ -37,7 +37,7 @@ public class App {
 
     public static void main(String[] args) throws FileNotFoundException, IOException {
         configPath = Arrays.asList(args).contains("--config") ? args[Arrays.asList(args).indexOf("--config")+1] : "./config";
-        sourcePath = Arrays.asList(args).contains("--source") ? args[Arrays.asList(args).indexOf("--source")+1] : "./app";
+        sourcePath = Arrays.asList(args).contains("--source") ? args[Arrays.asList(args).indexOf("--source")+1] : "./";
         debug = Arrays.asList(args).contains("--debug");
         try(BufferedReader reader = new BufferedReader(new FileReader(new File(configPath+"/config.txt")))){
             token = reader.readLine();
