@@ -8,3 +8,7 @@ app/build
 *.toc
 .cache
 .gradle
+
+# nix
+result
+*.qcow2
