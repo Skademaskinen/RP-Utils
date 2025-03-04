@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs = {
-      url = "nixpkgs/nixos-24.11";
+      url = "nixpkgs/nixos-unstable";
     };
     gradle2nix = {
       url = "github:tadfisher/gradle2nix/v2";
